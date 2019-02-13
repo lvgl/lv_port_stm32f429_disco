@@ -45,7 +45,7 @@
 #endif 
 
 /* Includes ------------------------------------------------------------------*/
-#include "lcd.h"
+#include <stdint.h>
 
 /** @addtogroup BSP
   * @{
@@ -211,11 +211,6 @@ void     ili9341_WriteData(uint16_t RegValue);
 uint32_t ili9341_ReadData(uint16_t RegValue, uint8_t ReadSize);
 void     ili9341_DisplayOn(void);
 void     ili9341_DisplayOff(void);
-uint16_t ili9341_GetLcdPixelWidth(void);
-uint16_t ili9341_GetLcdPixelHeight(void);
-
-/* LCD driver structure */
-extern LCD_DrvTypeDef   ili9341_drv;
 
 /* LCD IO functions */
 void     LCD_IO_Init(void);

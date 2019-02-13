@@ -77,24 +77,6 @@
   * @{
   */ 
 
-LCD_DrvTypeDef   ili9341_drv = 
-{
-  ili9341_Init,
-  ili9341_ReadID,
-  ili9341_DisplayOn,
-  ili9341_DisplayOff,
-  0,
-  0,
-  0,
-  0,
-  0,
-  0,
-  ili9341_GetLcdPixelWidth,
-  ili9341_GetLcdPixelHeight,
-  0,
-  0,    
-};
-
 /**
   * @}
   */ 
@@ -241,17 +223,6 @@ void ili9341_Init(void)
 }
 
 /**
-  * @brief  Disables the Display.
-  * @param  None
-  * @retval LCD Register Value.
-  */
-uint16_t ili9341_ReadID(void)
-{
-  LCD_IO_Init();
-  return ((uint16_t)ili9341_ReadData(LCD_READ_ID4, LCD_READ_ID4_SIZE));
-}
-
-/**
   * @brief  Enables the Display.
   * @param  None
   * @retval None
@@ -303,28 +274,6 @@ uint32_t ili9341_ReadData(uint16_t RegValue, uint8_t ReadSize)
 {
   /* Read a max of 4 bytes */
   return (LCD_IO_ReadData(RegValue, ReadSize));
-}
-
-/**
-  * @brief  Get LCD PIXEL WIDTH.
-  * @param  None
-  * @retval LCD PIXEL WIDTH.
-  */
-uint16_t ili9341_GetLcdPixelWidth(void)
-{
-  /* Return LCD PIXEL WIDTH */
-  return ILI9341_LCD_PIXEL_WIDTH;
-}
-
-/**
-  * @brief  Get LCD PIXEL HEIGHT.
-  * @param  None
-  * @retval LCD PIXEL HEIGHT.
-  */
-uint16_t ili9341_GetLcdPixelHeight(void)
-{
-  /* Return LCD PIXEL HEIGHT */
-  return ILI9341_LCD_PIXEL_HEIGHT;
 }
 
 /**

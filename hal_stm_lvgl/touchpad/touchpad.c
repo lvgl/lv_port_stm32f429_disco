@@ -11,7 +11,7 @@
 
 #include "stm32f4xx.h"
 #include "../stm32f429i_discovery.h"
-#include "stm32f429i_discovery_ts.h"
+#include "stmpe811.h"
 
 /*********************
  *      DEFINES
@@ -25,11 +25,11 @@
  *  STATIC PROTOTYPES
  **********************/
 static bool touchpad_read(lv_indev_data_t *data);
+static bool touchpad_get_xy(int16_t *x, int16_t *y);
 
 /**********************
  *  STATIC VARIABLES
  **********************/
-static TS_StateTypeDef  TS_State;
 
 /**********************
  *      MACROS
@@ -44,7 +44,8 @@ static TS_StateTypeDef  TS_State;
  */
 void touchpad_init(void)
 {
-  BSP_TS_Init(TFT_HOR_RES, TFT_VER_RES);
+  stmpe811_Init(TS_I2C_ADDRESS);
+  stmpe811_TS_Start(TS_I2C_ADDRESS);
 
   lv_indev_drv_t indev_drv;
   lv_indev_drv_init(&indev_drv);
@@ -69,10 +70,13 @@ static bool touchpad_read(lv_indev_data_t *data)
 	static int16_t last_x = 0;
 	static int16_t last_y = 0;
 
-	BSP_TS_GetState(&TS_State);
-	if(TS_State.TouchDetected != 0) {
-		data->point.x = TS_State.X;
-		data->point.y = TS_State.Y;
+	bool detected;
+	int16_t x;
+	int16_t y;
+	detected = touchpad_get_xy(&x, &y);
+	if(detected) {
+		data->point.x = x;
+		data->point.y = y;
 		last_x = data->point.x;
 		last_y = data->point.y;
 		data->state = LV_INDEV_STATE_PR;
@@ -83,4 +87,57 @@ static bool touchpad_read(lv_indev_data_t *data)
 	}
 
 	return false;
+}
+
+
+static bool touchpad_get_xy(int16_t *x, int16_t *y)
+{
+	static uint32_t _x = 0, _y = 0;
+	uint16_t xDiff, yDiff, x_raw, y_raw, xr, yr;
+
+	bool detected;
+	detected = stmpe811_TS_DetectTouch(TS_I2C_ADDRESS);
+
+	if(!detected) return false;
+
+
+	stmpe811_TS_GetXY(TS_I2C_ADDRESS, &x_raw, &y_raw);
+
+	/* Y value first correction */
+	y_raw -= 360;
+
+	/* Y value second correction */
+	yr = y_raw / 11;
+
+	/* Return y_raw position value */
+	if(yr <= 0) yr = 0;
+	else if (yr > TFT_VER_RES) yr = TFT_VER_RES - 1;
+
+	y_raw = yr;
+
+	/* X value first correction */
+	if(x_raw <= 3000) x_raw = 3870 - x_raw;
+	else  x_raw = 3800 - x_raw;
+
+	/* X value second correction */
+	xr = x_raw / 15;
+
+	/* Return X position value */
+	if(xr <= 0) xr = 0;
+	else if (xr > TFT_HOR_RES) xr = TFT_HOR_RES - 1;
+
+	x_raw = xr;
+	xDiff = x_raw > _x? (x_raw - _x): (_x - x_raw);
+	yDiff = y_raw > _y? (y_raw - _y): (_y - y_raw);
+
+	if (xDiff + yDiff > 5) {
+		_x = x_raw;
+		_y = y_raw;
+	}
+
+	/* Update the X and Y position */
+	*x = _x;
+	*y = _y;
+
+	return true;
 }

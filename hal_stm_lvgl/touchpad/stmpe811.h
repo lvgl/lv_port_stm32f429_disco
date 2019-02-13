@@ -45,8 +45,7 @@
 #endif   
    
 /* Includes ------------------------------------------------------------------*/
-#include "ts.h"
-#include "io.h"
+#include <stdint.h>
 
 /** @addtogroup BSP
   * @{
@@ -214,34 +213,14 @@
   */
 void     stmpe811_Init(uint16_t DeviceAddr);
 void     stmpe811_Reset(uint16_t DeviceAddr);
-uint16_t stmpe811_ReadID(uint16_t DeviceAddr);
-void     stmpe811_EnableGlobalIT(uint16_t DeviceAddr);
-void     stmpe811_DisableGlobalIT(uint16_t DeviceAddr);
-void     stmpe811_EnableITSource(uint16_t DeviceAddr, uint8_t Source);
-void     stmpe811_DisableITSource(uint16_t DeviceAddr, uint8_t Source);
-void     stmpe811_SetITPolarity(uint16_t DeviceAddr, uint8_t Polarity);
-void     stmpe811_SetITType(uint16_t DeviceAddr, uint8_t Type);
-uint8_t  stmpe811_GlobalITStatus(uint16_t DeviceAddr, uint8_t Source);
-uint8_t  stmpe811_ReadGITStatus(uint16_t DeviceAddr, uint8_t Source);
-void     stmpe811_ClearGlobalIT(uint16_t DeviceAddr, uint8_t Source);
 
 /** 
   * @brief STMPE811 IO functionalities functions
   */
 void     stmpe811_IO_Start(uint16_t DeviceAddr, uint32_t IO_Pin);
-uint8_t  stmpe811_IO_Config(uint16_t DeviceAddr, uint32_t IO_Pin, IO_ModeTypedef IO_Mode);
 void     stmpe811_IO_InitPin(uint16_t DeviceAddr, uint32_t IO_Pin, uint8_t Direction);
 void     stmpe811_IO_EnableAF(uint16_t DeviceAddr, uint32_t IO_Pin);
 void     stmpe811_IO_DisableAF(uint16_t DeviceAddr, uint32_t IO_Pin);
-void     stmpe811_IO_SetEdgeMode(uint16_t DeviceAddr, uint32_t IO_Pin, uint8_t Edge);
-void     stmpe811_IO_WritePin(uint16_t DeviceAddr, uint32_t IO_Pin, uint8_t PinState);
-uint32_t stmpe811_IO_ReadPin(uint16_t DeviceAddr, uint32_t IO_Pin);
-void     stmpe811_IO_EnableIT(uint16_t DeviceAddr);
-void     stmpe811_IO_DisableIT(uint16_t DeviceAddr);
-void     stmpe811_IO_EnablePinIT(uint16_t DeviceAddr, uint32_t IO_Pin);
-void     stmpe811_IO_DisablePinIT(uint16_t DeviceAddr, uint32_t IO_Pin);
-uint32_t stmpe811_IO_ITStatus(uint16_t DeviceAddr, uint32_t IO_Pin);
-void     stmpe811_IO_ClearIT(uint16_t DeviceAddr, uint32_t IO_Pin);
 
 /** 
   * @brief STMPE811 Touch screen functionalities functions
@@ -249,10 +228,6 @@ void     stmpe811_IO_ClearIT(uint16_t DeviceAddr, uint32_t IO_Pin);
 void     stmpe811_TS_Start(uint16_t DeviceAddr);
 uint8_t  stmpe811_TS_DetectTouch(uint16_t DeviceAddr);
 void     stmpe811_TS_GetXY(uint16_t DeviceAddr, uint16_t *X, uint16_t *Y);
-void     stmpe811_TS_EnableIT(uint16_t DeviceAddr);
-void     stmpe811_TS_DisableIT(uint16_t DeviceAddr);
-uint8_t  stmpe811_TS_ITStatus (uint16_t DeviceAddr);
-void     stmpe811_TS_ClearIT (uint16_t DeviceAddr);
 
 void     IOE_Init(void);
 void     IOE_ITConfig (void);
@@ -261,31 +236,10 @@ void     IOE_Write(uint8_t addr, uint8_t reg, uint8_t value);
 uint8_t  IOE_Read(uint8_t addr, uint8_t reg);
 uint16_t IOE_ReadMultiple(uint8_t addr, uint8_t reg, uint8_t *buffer, uint16_t length);
 
-/* Touch screen driver structure */
-extern TS_DrvTypeDef stmpe811_ts_drv;
-
-/* IO driver structure */
-extern IO_DrvTypeDef stmpe811_io_drv;
 
 #ifdef __cplusplus
 }
 #endif
 #endif /* __STMPE811_H */
-
-/**
-  * @}
-  */ 
-
-/**
-  * @}
-  */
-
-/**
-  * @}
-  */ 
-
-/**
-  * @}
-  */
 
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

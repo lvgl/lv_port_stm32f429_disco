@@ -132,7 +132,6 @@ static HAL_StatusTypeDef  I2Cx_IsDeviceReady(uint16_t DevAddress, uint32_t Trial
 static void               SPIx_Init(void);
 static void               SPIx_Write(uint16_t Value);
 static uint32_t           SPIx_Read(uint8_t ReadSize);
-static uint8_t            SPIx_WriteRead(uint8_t Byte);
 static void               SPIx_Error(void);
 static void               SPIx_MspInit(SPI_HandleTypeDef *hspi);
 
@@ -151,19 +150,6 @@ void                      IOE_Write(uint8_t Addr, uint8_t Reg, uint8_t Value);
 uint8_t                   IOE_Read(uint8_t Addr, uint8_t Reg);
 uint16_t                  IOE_ReadMultiple(uint8_t Addr, uint8_t Reg, uint8_t *pBuffer, uint16_t Length);
 void                      IOE_WriteMultiple(uint8_t Addr, uint8_t Reg, uint8_t *pBuffer, uint16_t Length);
-
-/* Link function for GYRO peripheral */
-void                      GYRO_IO_Init(void);
-void                      GYRO_IO_Write(uint8_t* pBuffer, uint8_t WriteAddr, uint16_t NumByteToWrite);
-void                      GYRO_IO_Read(uint8_t* pBuffer, uint8_t ReadAddr, uint16_t NumByteToRead);
-
-#ifdef EE_M24LR64
-/* Link function for I2C EEPROM peripheral */
-void                      EEPROM_IO_Init(void);
-HAL_StatusTypeDef         EEPROM_IO_WriteData(uint16_t DevAddress, uint16_t MemAddress, uint8_t* pBuffer, uint32_t BufferSize);
-HAL_StatusTypeDef         EEPROM_IO_ReadData(uint16_t DevAddress, uint16_t MemAddress, uint8_t* pBuffer, uint32_t BufferSize);
-HAL_StatusTypeDef         EEPROM_IO_IsDeviceReady(uint16_t DevAddress, uint32_t Trials);
-#endif /* EE_M24LR64 */
 
 /**
   * @}
@@ -705,26 +691,6 @@ static void SPIx_Write(uint16_t Value)
 }
 
 /**
-  * @brief  Sends a Byte through the SPI interface and return the Byte received
-  *         from the SPI bus.
-  * @param  Byte: Byte send.
-  * @retval The received byte value
-  */
-static uint8_t SPIx_WriteRead(uint8_t Byte)
-{
-  uint8_t receivedbyte = 0;
-
-  /* Send a Byte through the SPI peripheral */
-  /* Read byte from the SPI bus */
-  if(HAL_SPI_TransmitReceive(&SpiHandle, (uint8_t*) &Byte, (uint8_t*) &receivedbyte, 1, SpixTimeout) != HAL_OK)
-  {
-    SPIx_Error();
-  }
-
-  return receivedbyte;
-}
-
-/**
   * @brief  SPIx error treatment function.
   */
 static void SPIx_Error(void)
@@ -953,158 +919,6 @@ void IOE_Delay(uint32_t Delay)
   HAL_Delay(Delay);
 }
 
-/********************************* LINK GYROSCOPE *****************************/
-
-/**
-  * @brief  Configures the Gyroscope SPI interface.
-  */
-void GYRO_IO_Init(void)
-{
-  GPIO_InitTypeDef GPIO_InitStructure;
-  
-  /* Configure the Gyroscope Control pins ------------------------------------*/
-  /* Enable CS GPIO clock and Configure GPIO PIN for Gyroscope Chip select */  
-  GYRO_CS_GPIO_CLK_ENABLE();  
-  GPIO_InitStructure.Pin = GYRO_CS_PIN;
-  GPIO_InitStructure.Mode = GPIO_MODE_OUTPUT_PP;
-  GPIO_InitStructure.Pull  = GPIO_NOPULL;
-  GPIO_InitStructure.Speed = GPIO_SPEED_MEDIUM;
-  HAL_GPIO_Init(GYRO_CS_GPIO_PORT, &GPIO_InitStructure);
-  
-  /* Deselect: Chip Select high */
-  GYRO_CS_HIGH();
-  
-  /* Enable INT1, INT2 GPIO clock and Configure GPIO PINs to detect Interrupts */
-  GYRO_INT_GPIO_CLK_ENABLE();
-  GPIO_InitStructure.Pin = GYRO_INT1_PIN | GYRO_INT2_PIN;
-  GPIO_InitStructure.Mode = GPIO_MODE_INPUT;
-  GPIO_InitStructure.Speed = GPIO_SPEED_FAST;
-  GPIO_InitStructure.Pull= GPIO_NOPULL;
-  HAL_GPIO_Init(GYRO_INT_GPIO_PORT, &GPIO_InitStructure);
-
-  SPIx_Init();
-}
-
-/**
-  * @brief  Writes one byte to the Gyroscope.
-  * @param  pBuffer: Pointer to the buffer containing the data to be written to the Gyroscope.
-  * @param  WriteAddr: Gyroscope's internal address to write to.
-  * @param  NumByteToWrite: Number of bytes to write.
-  */
-void GYRO_IO_Write(uint8_t* pBuffer, uint8_t WriteAddr, uint16_t NumByteToWrite)
-{
-  /* Configure the MS bit: 
-       - When 0, the address will remain unchanged in multiple read/write commands.
-       - When 1, the address will be auto incremented in multiple read/write commands.
-  */
-  if(NumByteToWrite > 0x01)
-  {
-    WriteAddr |= (uint8_t)MULTIPLEBYTE_CMD;
-  }
-  /* Set chip select Low at the start of the transmission */
-  GYRO_CS_LOW();
-  
-  /* Send the Address of the indexed register */
-  SPIx_WriteRead(WriteAddr);
-  
-  /* Send the data that will be written into the device (MSB First) */
-  while(NumByteToWrite >= 0x01)
-  {
-    SPIx_WriteRead(*pBuffer);
-    NumByteToWrite--;
-    pBuffer++;
-  }
-  
-  /* Set chip select High at the end of the transmission */ 
-  GYRO_CS_HIGH();
-}
-
-/**
-  * @brief  Reads a block of data from the Gyroscope.
-  * @param  pBuffer: Pointer to the buffer that receives the data read from the Gyroscope.
-  * @param  ReadAddr: Gyroscope's internal address to read from.
-  * @param  NumByteToRead: Number of bytes to read from the Gyroscope.
-  */
-void GYRO_IO_Read(uint8_t* pBuffer, uint8_t ReadAddr, uint16_t NumByteToRead)
-{  
-  if(NumByteToRead > 0x01)
-  {
-    ReadAddr |= (uint8_t)(READWRITE_CMD | MULTIPLEBYTE_CMD);
-  }
-  else
-  {
-    ReadAddr |= (uint8_t)READWRITE_CMD;
-  }
-  /* Set chip select Low at the start of the transmission */
-  GYRO_CS_LOW();
-  
-  /* Send the Address of the indexed register */
-  SPIx_WriteRead(ReadAddr);
-  
-  /* Receive the data that will be read from the device (MSB First) */
-  while(NumByteToRead > 0x00)
-  {
-    /* Send dummy byte (0x00) to generate the SPI clock to Gyroscope (Slave device) */
-    *pBuffer = SPIx_WriteRead(DUMMY_BYTE);
-    NumByteToRead--;
-    pBuffer++;
-  }
-  
-  /* Set chip select High at the end of the transmission */ 
-  GYRO_CS_HIGH();
-}  
-
-
-#ifdef EE_M24LR64
-
-/******************************** LINK I2C EEPROM *****************************/
-
-/**
-  * @brief  Initializes peripherals used by the I2C EEPROM driver.
-  */
-void EEPROM_IO_Init(void)
-{
-  I2Cx_Init();
-}
-
-/**
-  * @brief  Writes data to I2C EEPROM driver in using DMA channel.
-  * @param  DevAddress: Target device address
-  * @param  MemAddress: Internal memory address
-  * @param  pBuffer: Pointer to data buffer
-  * @param  BufferSize: Amount of data to be sent
-  * @retval HAL status
-  */
-HAL_StatusTypeDef EEPROM_IO_WriteData(uint16_t DevAddress, uint16_t MemAddress, uint8_t* pBuffer, uint32_t BufferSize)
-{
-  return (I2Cx_WriteBufferDMA(DevAddress, MemAddress,  pBuffer, BufferSize));
-}
-
-/**
-  * @brief  Reads data from I2C EEPROM driver in using DMA channel.
-  * @param  DevAddress: Target device address
-  * @param  MemAddress: Internal memory address
-  * @param  pBuffer: Pointer to data buffer
-  * @param  BufferSize: Amount of data to be read
-  * @retval HAL status
-  */
-HAL_StatusTypeDef EEPROM_IO_ReadData(uint16_t DevAddress, uint16_t MemAddress, uint8_t* pBuffer, uint32_t BufferSize)
-{
-  return (I2Cx_ReadBufferDMA(DevAddress, MemAddress, pBuffer, BufferSize));
-}
-
-/**
-* @brief  Checks if target device is ready for communication. 
-* @note   This function is used with Memory devices
-* @param  DevAddress: Target device address
-* @param  Trials: Number of trials
-* @retval HAL status
-*/
-HAL_StatusTypeDef EEPROM_IO_IsDeviceReady(uint16_t DevAddress, uint32_t Trials)
-{ 
-  return (I2Cx_IsDeviceReady(DevAddress, Trials));
-}
-#endif /* EE_M24LR64 */
 
 /**
   * @}
