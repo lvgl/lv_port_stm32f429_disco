@@ -7,7 +7,7 @@
  *      INCLUDES
  *********************/
 #include "hal_stm_lvgl/tft/tft.h"
-#include "lvgl/lv_hal/lv_hal.h"
+#include "lvgl/src/lv_hal/lv_hal.h"
 
 #include "stm32f4xx.h"
 #include "../stm32f429i_discovery.h"
@@ -24,7 +24,7 @@
 /**********************
  *  STATIC PROTOTYPES
  **********************/
-static bool touchpad_read(lv_indev_data_t *data);
+static bool touchpad_read(lv_indev_drv_t * drv, lv_indev_data_t *data);
 static bool touchpad_get_xy(int16_t *x, int16_t *y);
 
 /**********************
@@ -49,7 +49,7 @@ void touchpad_init(void)
 
   lv_indev_drv_t indev_drv;
   lv_indev_drv_init(&indev_drv);
-  indev_drv.read = touchpad_read;
+  indev_drv.read_cb = touchpad_read;
   indev_drv.type = LV_INDEV_TYPE_POINTER;
   lv_indev_drv_register(&indev_drv);
 }
@@ -65,7 +65,7 @@ void touchpad_init(void)
  * @param y put the y coordinate here
  * @return true: the device is pressed, false: released
  */
-static bool touchpad_read(lv_indev_data_t *data)
+static bool touchpad_read(lv_indev_drv_t * drv, lv_indev_data_t *data)
 {
 	static int16_t last_x = 0;
 	static int16_t last_y = 0;
