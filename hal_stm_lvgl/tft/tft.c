@@ -144,8 +144,8 @@ void tft_init(void)
 	disp_drv.flush_cb = tft_flush;
 #if TFT_USE_GPU != 0
 	DMA2D_Config();
-	disp_drv.mem_blend_cb = gpu_mem_blend;
-	disp_drv.mem_fill_cb = gpu_mem_fill;
+	disp_drv.gpu_blend_cb = gpu_mem_blend;
+	disp_drv.gpu_fill_cb = gpu_mem_fill;
 #endif
 	lv_disp_drv_register(&disp_drv);
 }
