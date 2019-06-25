@@ -61,8 +61,9 @@
 /*These 3 functions are needed by LittlevGL*/
 static void tft_flush(lv_disp_drv_t * drv, const lv_area_t * area, lv_color_t * color_p);
 #if TFT_USE_GPU != 0
-static void gpu_mem_blend(lv_color_t * dest, const lv_color_t * src, uint32_t length, lv_opa_t opa);
-static void gpu_mem_fill(lv_color_t * dest, uint32_t length, lv_color_t color);
+static void gpu_mem_blend(lv_disp_drv_t * drv, lv_color_t * dest, const lv_color_t * src, uint32_t length, lv_opa_t opa);
+static void gpu_mem_fill(lv_disp_drv_t * disp_drv, lv_color_t * dest_buf, lv_coord_t dest_width,
+        const lv_area_t * fill_area, lv_color_t color);
 #endif
 
 /*LCD*/
@@ -205,7 +206,7 @@ static void tft_flush(lv_disp_drv_t * drv, const lv_area_t * area, lv_color_t * 
  * @param length number of pixels in 'src'
  * @param opa opacity (0, OPA_TRANSP: transparent ... 255, OPA_COVER, fully cover)
  */
-static void gpu_mem_blend(lv_disp_drv_t * dsv, lv_color_t * dest, const lv_color_t * src, uint32_t length, lv_opa_t opa)
+static void gpu_mem_blend(lv_disp_drv_t * drv, lv_color_t * dest, const lv_color_t * src, uint32_t length, lv_opa_t opa)
 {
 	/*Wait for the previous operation*/
 	HAL_DMA2D_PollForTransfer(&Dma2dHandle, 100);
@@ -222,7 +223,7 @@ static void gpu_mem_blend(lv_disp_drv_t * dsv, lv_color_t * dest, const lv_color
 	HAL_DMA2D_BlendingStart(&Dma2dHandle, (uint32_t) src, (uint32_t) dest, (uint32_t)dest, length, 1);
 }
 
-static void gpu_mem_fill(lv_disp_drv_t * disp_drv, lv_color_t * dest_buf, const lv_area_t * dest_area,
+static void gpu_mem_fill(lv_disp_drv_t * disp_drv, lv_color_t * dest_buf, lv_coord_t dest_width,
         const lv_area_t * fill_area, lv_color_t color)
 {
 	/*Wait for the previous operation*/
@@ -236,10 +237,22 @@ static void gpu_mem_fill(lv_disp_drv_t * disp_drv, lv_color_t * dest_buf, const 
      while(1);
    }
 
+   Dma2dHandle.LayerCfg[1].InputAlpha = 0xff;
+   HAL_DMA2D_ConfigLayer(&Dma2dHandle, 1);
 
-	Dma2dHandle.LayerCfg[1].InputAlpha = 0xff;
-    HAL_DMA2D_ConfigLayer(&Dma2dHandle, 1);
-	HAL_DMA2D_BlendingStart(&Dma2dHandle, (uint32_t) lv_color_to32(color), (uint32_t) dest_buf, (uint32_t)dest_buf, lv_area_get_width(), 1);
+   lv_color_t * dest_buf_ofs = dest_buf;
+
+   dest_buf_ofs += dest_width * fill_area->y1;
+   dest_buf_ofs += fill_area->x1;
+   lv_coord_t area_w = lv_area_get_width(fill_area);
+
+   uint32_t i;
+   for(i = fill_area->y1; i <= fill_area->y2; i++) {
+	   /*Wait for the previous operation*/
+	   HAL_DMA2D_PollForTransfer(&Dma2dHandle, 100);
+	   HAL_DMA2D_BlendingStart(&Dma2dHandle, (uint32_t) lv_color_to32(color), (uint32_t) dest_buf_ofs, (uint32_t)dest_buf_ofs, area_w, 1);
+	   dest_buf_ofs += dest_width;
+   }
 }
 
 #endif

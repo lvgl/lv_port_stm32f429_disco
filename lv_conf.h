@@ -13,6 +13,8 @@
 #define LV_CONF_H
 /* clang-format off */
 
+#include <stdint.h>
+
 /*====================
    Graphical settings
  *====================*/
@@ -53,6 +55,9 @@
  * (Not so important, you can adjust it to modify default sizes and spaces)*/
 #define LV_DPI              100     /*[px]*/
 
+/* Type of coordinates. Should be `int16_t` (or `int32_t` for extreme cases) */
+typedef int32_t lv_coord_t;
+
 /*=========================
    Memory manager settings
  *=========================*/
@@ -64,7 +69,7 @@
 #define LV_MEM_CUSTOM      0
 #if LV_MEM_CUSTOM == 0
 /* Size of the memory used by `lv_mem_alloc` in bytes (>= 2kB)*/
-#  define LV_MEM_SIZE    (32U * 1024U)
+#  define LV_MEM_SIZE    (128U * 1024U)
 
 /* Complier prefix for a big array declaration */
 #  define LV_MEM_ATTR
@@ -138,18 +143,19 @@ typedef void * lv_group_user_data_t;
 
 /* 1: Enable file system (might be required for images */
 #define LV_USE_FILESYSTEM       1
+typedef void * lv_fs_drv_user_data_t;
 
 /* 1: Enable indexed (palette) images */
-#define LV_IMG_CF_INDEXED   1
+#define LV_IMG_CF_INDEXED       1
 
 /* 1: Enable alpha indexed images */
-#define LV_IMG_CF_ALPHA     1
+#define LV_IMG_CF_ALPHA         1
+
+/*Declare the type of the user data of image decoder (can be e.g. `void *`, `int`, `struct`)*/
+typedef void * lv_img_decoder_user_data_t;
 
 /*1: Add a `user_data` to drivers and objects*/
-#define LV_USE_USER_DATA_SINGLE 1
-
-/*1: Add separate `user_data` for every callback*/
-#define LV_USE_USER_DATA_MULTI  0
+#define LV_USE_USER_DATA        1
 
 /*=====================
  *  Compiler settings
@@ -165,6 +171,9 @@ typedef void * lv_group_user_data_t;
  * E.g. __attribute__((aligned(4))) */
 #define LV_ATTRIBUTE_MEM_ALIGN
 
+/* Attribute to mark large constant arrays for example
+ * font's bitmaps */
+#define LV_ATTRIBUTE_LARGE_CONST
 
 /* 1: Variable length array is supported*/
 #define LV_COMPILER_VLA_SUPPORTED            1
@@ -225,40 +234,29 @@ typedef void * lv_indev_drv_user_data_t;            /*Type of user data in the i
  *    FONT USAGE
  *===================*/
 
-/* More info about fonts: https://docs.littlevgl.com/#Fonts
- * To enable a built-in font use 1,2,4 or 8 values
- * which will determine the bit-per-pixel. Higher value means smoother fonts */
-#define LV_USE_FONT_DEJAVU_10              4
-#define LV_USE_FONT_DEJAVU_10_LATIN_SUP    4
-#define LV_USE_FONT_DEJAVU_10_CYRILLIC     4
-#define LV_USE_FONT_SYMBOL_10              4
-
-#define LV_USE_FONT_DEJAVU_20              4
-#define LV_USE_FONT_DEJAVU_20_LATIN_SUP    4
-#define LV_USE_FONT_DEJAVU_20_CYRILLIC     4
-#define LV_USE_FONT_SYMBOL_20              4
-
-#define LV_USE_FONT_DEJAVU_30              4
-#define LV_USE_FONT_DEJAVU_30_LATIN_SUP    4
-#define LV_USE_FONT_DEJAVU_30_CYRILLIC     4
-#define LV_USE_FONT_SYMBOL_30              4
-
-#define LV_USE_FONT_DEJAVU_40              4
-#define LV_USE_FONT_DEJAVU_40_LATIN_SUP    4
-#define LV_USE_FONT_DEJAVU_40_CYRILLIC     4
-#define LV_USE_FONT_SYMBOL_40              4
-
-#define LV_USE_FONT_MONOSPACE_8            1
+/* The built-in fonts contains the ASCII range and some Symbols with  4 bit-per-pixel.
+ * The symbols are available via `LV_SYMBOL_...` defines
+ * More info about fonts: https://docs.littlevgl.com/#Fonts
+ * To create a new font go to: https://littlevgl.com/ttf-font-to-c-array
+ */
+#define LV_FONT_ROBOTO_12    0
+#define LV_FONT_ROBOTO_16    1
+#define LV_FONT_ROBOTO_22    0
+#define LV_FONT_ROBOTO_28    0
 
 /* Optionally declare your custom fonts here.
  * You can use these fonts as default font too
  * and they will be available globally. E.g.
  * #define LV_FONT_CUSTOM_DECLARE LV_FONT_DECLARE(my_font_1) \
- *                                LV_FONT_DECLARE(my_font_2) \
+ *                                LV_FONT_DECLARE(my_font_2)
  */
 #define LV_FONT_CUSTOM_DECLARE
 
-#define LV_FONT_DEFAULT        &lv_font_dejavu_20     /*Always set a default font from the built-in fonts*/
+/*Always set a default font from the built-in fonts*/
+#define LV_FONT_DEFAULT        &lv_font_roboto_16
+
+/*Declare the type of the user data of fonts (can be e.g. `void *`, `int`, `struct`)*/
+typedef void * lv_font_user_data_t;
 
 /*=================
  *  Text settings
@@ -395,7 +393,7 @@ typedef void * lv_obj_user_data_t;
 /*Page (dependencies: lv_cont)*/
 #define LV_USE_PAGE     1
 
-/*Preload (dependencies: lv_arc)*/
+/*Preload (dependencies: lv_arc, lv_anim)*/
 #define LV_USE_PRELOAD      1
 #if LV_USE_PRELOAD != 0
 #  define LV_PRELOAD_DEF_ARC_LENGTH   60      /*[deg]*/
@@ -425,8 +423,8 @@ typedef void * lv_obj_user_data_t;
 /*Text area (dependencies: lv_label, lv_page)*/
 #define LV_USE_TA       1
 #if LV_USE_TA != 0
-#  define LV_TA_CURSOR_BLINK_TIME 400     /*ms*/
-#  define LV_TA_PWD_SHOW_TIME     1500    /*ms*/
+#  define LV_TA_DEF_CURSOR_BLINK_TIME 400     /*ms*/
+#  define LV_TA_DEF_PWD_SHOW_TIME     1500    /*ms*/
 #endif
 
 /*Table (dependencies: lv_label)*/

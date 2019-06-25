@@ -20,7 +20,7 @@
 #define TFT_VER_RES 320
 
 #define TFT_EXT_FB		1		/*Frame buffer is located into an external SDRAM*/
-#define TFT_USE_GPU		0		/*Enable hardware accelerator*/
+#define TFT_USE_GPU		1		/*Enable hardware accelerator*/
 
 /**********************
  *      TYPEDEFS
