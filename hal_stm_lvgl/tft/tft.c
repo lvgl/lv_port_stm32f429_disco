@@ -128,10 +128,9 @@ static const lv_color_t * buf_to_flush;
  */
 void tft_init(void)
 {
-	static lv_color_t disp_buf1[TFT_HOR_RES * 30];
-//	static lv_color_t disp_buf1[TFT_HOR_RES * 30];
+	static lv_color_t disp_buf1[TFT_HOR_RES * 40];
 	static lv_disp_buf_t buf;
-	lv_disp_buf_init(&buf, disp_buf1, NULL, TFT_HOR_RES * 30);
+	lv_disp_buf_init(&buf, disp_buf1, NULL, TFT_HOR_RES * 40);
 
 	lv_disp_drv_init(&disp_drv);
 
