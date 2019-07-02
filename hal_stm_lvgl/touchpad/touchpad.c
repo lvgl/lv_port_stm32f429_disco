@@ -79,6 +79,7 @@ static bool touchpad_read(lv_indev_drv_t * drv, lv_indev_data_t *data)
 		data->point.y = y;
 		last_x = data->point.x;
 		last_y = data->point.y;
+
 		data->state = LV_INDEV_STATE_PR;
 	} else {
 		data->point.x = last_x;
@@ -92,8 +93,8 @@ static bool touchpad_read(lv_indev_drv_t * drv, lv_indev_data_t *data)
 
 static bool touchpad_get_xy(int16_t *x, int16_t *y)
 {
-	static uint32_t _x = 0, _y = 0;
-	uint16_t xDiff, yDiff, x_raw, y_raw, xr, yr;
+	static int32_t _x = 0, _y = 0;
+	int16_t xDiff, yDiff, xr, yr, x_raw, y_raw;;
 
 	bool detected;
 	detected = stmpe811_TS_DetectTouch(TS_I2C_ADDRESS);
