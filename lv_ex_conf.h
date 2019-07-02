@@ -35,7 +35,7 @@
 
 /* Test the graphical performance of your MCU
  * with different settings*/
-#define LV_USE_BENCHMARK   0
+#define LV_USE_BENCHMARK   1
 
 /*A demo application with Keyboard, Text area, List and Chart
  * placed on Tab view */
