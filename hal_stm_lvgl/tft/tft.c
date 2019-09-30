@@ -297,13 +297,13 @@ static void LCD_Config(void)
   /* Accumulated vertical back porch = Vsync + VBP - 1 */
   LtdcHandle.Init.AccumulatedVBP = 3;
   /* Accumulated active width = Hsync + HBP + Active Width - 1 */
-  LtdcHandle.Init.AccumulatedActiveH = 323;
-  /* Accumulated active height = Vsync + VBP + Active Heigh - 1 */
   LtdcHandle.Init.AccumulatedActiveW = 269;
-  /* Total height = Vsync + VBP + Active Heigh + VFP - 1 */
-  LtdcHandle.Init.TotalHeigh = 327;
+  /* Accumulated active height = Vsync + VBP + Active Heigh - 1 */
+  LtdcHandle.Init.AccumulatedActiveH = 323;
   /* Total width = Hsync + HBP + Active Width + HFP - 1 */
   LtdcHandle.Init.TotalWidth = 279;
+  /* Total height = Vsync + VBP + Active Heigh + VFP - 1 */
+  LtdcHandle.Init.TotalHeigh = 327;
 
   /* Configure R,G,B component values for LCD background color */
   LtdcHandle.Init.Backcolor.Blue = 0;
