@@ -123,6 +123,12 @@ static const lv_color_t * buf_to_flush;
  *   GLOBAL FUNCTIONS
  **********************/
 
+static volatile uint32_t t_saved = 0;
+void monitor_cb(lv_disp_drv_t * d, uint32_t t, uint32_t p)
+{
+	t_saved = t;
+}
+
 /**
  * Initialize your display here
  */
@@ -141,6 +147,7 @@ void tft_init(void)
 	DMA_Config();
 	disp_drv.buffer = &buf;
 	disp_drv.flush_cb = tft_flush;
+	disp_drv.monitor_cb = monitor_cb;
 #if TFT_USE_GPU != 0
 	DMA2D_Config();
 	disp_drv.gpu_blend_cb = gpu_mem_blend;
@@ -829,7 +836,7 @@ static void DMA_Config(void)
   DmaHandle.Init.PeriphInc = DMA_PINC_ENABLE;               /* Peripheral increment mode Enable */
   DmaHandle.Init.MemInc = DMA_MINC_ENABLE;                  /* Memory increment mode Enable     */
   DmaHandle.Init.PeriphDataAlignment = DMA_PDATAALIGN_HALFWORD; /* Peripheral data alignment : 16bit */
-  DmaHandle.Init.MemDataAlignment = DMA_PDATAALIGN_HALFWORD;    /* memory data alignment : 16bit     */
+  DmaHandle.Init.MemDataAlignment = DMA_MDATAALIGN_HALFWORD;    /* memory data alignment : 16bit     */
   DmaHandle.Init.Mode = DMA_NORMAL;                         /* Normal DMA mode                  */
   DmaHandle.Init.Priority = DMA_PRIORITY_HIGH;              /* priority level : high            */
   DmaHandle.Init.FIFOMode = DMA_FIFOMODE_ENABLE;            /* FIFO mode enabled                */
