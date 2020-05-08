@@ -60,19 +60,11 @@
 
 /*These 3 functions are needed by LittlevGL*/
 static void tft_flush(lv_disp_drv_t * drv, const lv_area_t * area, lv_color_t * color_p);
-#if TFT_USE_GPU != 0
-static void gpu_mem_blend(lv_disp_drv_t * drv, lv_color_t * dest, const lv_color_t * src, uint32_t length, lv_opa_t opa);
-static void gpu_mem_fill(lv_disp_drv_t * disp_drv, lv_color_t * dest_buf, lv_coord_t dest_width,
-        const lv_area_t * fill_area, lv_color_t color);
-#endif
 
 /*LCD*/
 static void LCD_Config(void);
 void HAL_LTDC_MspDeInit(LTDC_HandleTypeDef *hltdc);
 void HAL_LTDC_MspInit(LTDC_HandleTypeDef *hltdc);
-#if TFT_USE_GPU != 0
-static void DMA2D_Config(void);
-#endif
 
 /*SD RAM*/
 #if TFT_EXT_FB != 0
@@ -91,10 +83,6 @@ static void Error_Handler(void);
  **********************/
 
 static LTDC_HandleTypeDef LtdcHandle;
-
-#if TFT_USE_GPU != 0
-static DMA2D_HandleTypeDef     Dma2dHandle;
-#endif
 
 #if TFT_EXT_FB != 0
 SDRAM_HandleTypeDef hsdram;
@@ -148,11 +136,6 @@ void tft_init(void)
 	disp_drv.buffer = &buf;
 	disp_drv.flush_cb = tft_flush;
 	disp_drv.monitor_cb = monitor_cb;
-#if TFT_USE_GPU != 0
-	DMA2D_Config();
-	disp_drv.gpu_blend_cb = gpu_mem_blend;
-	disp_drv.gpu_fill_cb = gpu_mem_fill;
-#endif
 	lv_disp_drv_register(&disp_drv);
 }
 
@@ -201,67 +184,6 @@ static void tft_flush(lv_disp_drv_t * drv, const lv_area_t * area, lv_color_t * 
 		while(1);	/*Halt on error*/
 	}
 }
-
-
-#if TFT_USE_GPU != 0
-
-/**
- * Copy pixels to destination memory using opacity
- * @param dest a memory address. Copy 'src' here.
- * @param src pointer to pixel map. Copy it to 'dest'.
- * @param length number of pixels in 'src'
- * @param opa opacity (0, OPA_TRANSP: transparent ... 255, OPA_COVER, fully cover)
- */
-static void gpu_mem_blend(lv_disp_drv_t * drv, lv_color_t * dest, const lv_color_t * src, uint32_t length, lv_opa_t opa)
-{
-	/*Wait for the previous operation*/
-	HAL_DMA2D_PollForTransfer(&Dma2dHandle, 100);
-	Dma2dHandle.Init.Mode         = DMA2D_M2M_BLEND;
-	/* DMA2D Initialization */
-	if(HAL_DMA2D_Init(&Dma2dHandle) != HAL_OK)
-	{
-		/* Initialization Error */
-		while(1);
-	}
-
-	Dma2dHandle.LayerCfg[1].InputAlpha = opa;
-    HAL_DMA2D_ConfigLayer(&Dma2dHandle, 1);
-	HAL_DMA2D_BlendingStart(&Dma2dHandle, (uint32_t) src, (uint32_t) dest, (uint32_t)dest, length, 1);
-}
-
-static void gpu_mem_fill(lv_disp_drv_t * disp_drv, lv_color_t * dest_buf, lv_coord_t dest_width,
-        const lv_area_t * fill_area, lv_color_t color)
-{
-	/*Wait for the previous operation*/
-	HAL_DMA2D_PollForTransfer(&Dma2dHandle, 100);
-
-   Dma2dHandle.Init.Mode         = DMA2D_R2M;
-   /* DMA2D Initialization */
-   if(HAL_DMA2D_Init(&Dma2dHandle) != HAL_OK)
-   {
-     /* Initialization Error */
-     while(1);
-   }
-
-   Dma2dHandle.LayerCfg[1].InputAlpha = 0xff;
-   HAL_DMA2D_ConfigLayer(&Dma2dHandle, 1);
-
-   lv_color_t * dest_buf_ofs = dest_buf;
-
-   dest_buf_ofs += dest_width * fill_area->y1;
-   dest_buf_ofs += fill_area->x1;
-   lv_coord_t area_w = lv_area_get_width(fill_area);
-
-   uint32_t i;
-   for(i = fill_area->y1; i <= fill_area->y2; i++) {
-	   /*Wait for the previous operation*/
-	   HAL_DMA2D_PollForTransfer(&Dma2dHandle, 100);
-	   HAL_DMA2D_BlendingStart(&Dma2dHandle, (uint32_t) lv_color_to32(color), (uint32_t) dest_buf_ofs, (uint32_t)dest_buf_ofs, area_w, 1);
-	   dest_buf_ofs += dest_width;
-   }
-}
-
-#endif
 
 static void LCD_Config(void)
 {
@@ -365,82 +287,6 @@ static void LCD_Config(void)
     Error_Handler();
   }
 }
-
-#if TFT_USE_GPU != 0
-/**
-  * @brief  DMA2D Transfer completed callback
-  * @param  hdma2d: DMA2D handle.
-  * @note   This example shows a simple way to report end of DMA2D transfer, and
-  *         you can add your own implementation.
-  * @retval None
-  */
-static void DMA2D_TransferComplete(DMA2D_HandleTypeDef *hdma2d)
-{
-
-}
-
-/**
-  * @brief  DMA2D error callbacks
-  * @param  hdma2d: DMA2D handle
-  * @note   This example shows a simple way to report DMA2D transfer error, and you can
-  *         add your own implementation.
-  * @retval None
-  */
-static void DMA2D_TransferError(DMA2D_HandleTypeDef *hdma2d)
-{
-
-}
-
-/**
-  * @brief DMA2D configuration.
-  * @note  This function Configure the DMA2D peripheral :
-  *        1) Configure the Transfer mode as memory to memory with blending.
-  *        2) Configure the output color mode as RGB565 pixel format.
-  *        3) Configure the foreground
-  *          - first image loaded from FLASH memory
-  *          - constant alpha value (decreased to see the background)
-  *          - color mode as RGB565 pixel format
-  *        4) Configure the background
-  *          - second image loaded from FLASH memory
-  *          - color mode as RGB565 pixel format
-  * @retval None
-  */
-static void DMA2D_Config(void)
-{
-  /* Configure the DMA2D Mode, Color Mode and output offset */
-  Dma2dHandle.Init.Mode         = DMA2D_M2M_BLEND;
-  Dma2dHandle.Init.ColorMode    = DMA2D_RGB565;
-  Dma2dHandle.Init.OutputOffset = 0x0;
-
-  /* DMA2D Callbacks Configuration */
-  Dma2dHandle.XferCpltCallback  = DMA2D_TransferComplete;
-  Dma2dHandle.XferErrorCallback = DMA2D_TransferError;
-
-  /* Foreground Configuration */
-  Dma2dHandle.LayerCfg[1].AlphaMode = DMA2D_REPLACE_ALPHA;
-  Dma2dHandle.LayerCfg[1].InputAlpha = 0xFF;
-  Dma2dHandle.LayerCfg[1].InputColorMode = DMA2D_INPUT_RGB565;
-  Dma2dHandle.LayerCfg[1].InputOffset = 0x0;
-
-  /* Background Configuration */
-  Dma2dHandle.LayerCfg[0].AlphaMode = DMA2D_REPLACE_ALPHA;
-  Dma2dHandle.LayerCfg[0].InputAlpha = 0xFF;
-  Dma2dHandle.LayerCfg[0].InputColorMode = DMA2D_INPUT_RGB565;
-  Dma2dHandle.LayerCfg[0].InputOffset = 0x0;
-
-  Dma2dHandle.Instance   = DMA2D;
-
-  /* DMA2D Initialization */
-  if(HAL_DMA2D_Init(&Dma2dHandle) != HAL_OK)
-  {
-    /* Initialization Error */
-    Error_Handler();
-  }
-
-  HAL_DMA2D_ConfigLayer(&Dma2dHandle, 0);
-  HAL_DMA2D_ConfigLayer(&Dma2dHandle, 1);
-}
-#endif
 
 /**
   * @brief  This function handles LTDC global interrupt request.

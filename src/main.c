@@ -17,13 +17,14 @@
 #include "hal_stm_lvgl/tft/tft.h"
 #include "hal_stm_lvgl/touchpad/touchpad.h"
 
-#include "lv_examples/lv_apps/demo/demo.h"
-#include "lv_examples/lv_apps/benchmark/benchmark.h"
+#include "lv_examples/lv_examples.h"
+
 
 static void SystemClock_Config(void);
 
 int main(void)
 {
+
 	HAL_Init();
 
 	/* Configure the system clock to 180 MHz */
@@ -42,9 +43,7 @@ int main(void)
 	tft_init();
 	touchpad_init();
 
-	demo_create();
-
-//	benchmark_create();
+	lv_demo_widgets();
 
 	while (1)
 	{
