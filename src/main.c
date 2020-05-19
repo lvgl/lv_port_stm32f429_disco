@@ -44,6 +44,7 @@ int main(void)
 	touchpad_init();
 
 	lv_demo_widgets();
+    lv_demo_widgets();
 
 	while (1)
 	{
