@@ -1,6 +1,6 @@
 /**
  * @file disp.c
- * 
+ *
  */
 
 /*********************
@@ -122,9 +122,10 @@ void monitor_cb(lv_disp_drv_t * d, uint32_t t, uint32_t p)
  */
 void tft_init(void)
 {
-	static lv_color_t disp_buf1[TFT_HOR_RES * 40];
-	static lv_disp_buf_t buf;
-	lv_disp_buf_init(&buf, disp_buf1, NULL, TFT_HOR_RES * 40);
+	static lv_color_t disp_buf1[TFT_HOR_RES * 60];
+	static lv_color_t disp_buf2[TFT_HOR_RES * 60];
+	static lv_disp_draw_buf_t buf;
+	lv_disp_draw_buf_init(&buf, disp_buf1, disp_buf2, TFT_HOR_RES * 40);
 
 	lv_disp_drv_init(&disp_drv);
 
@@ -133,9 +134,11 @@ void tft_init(void)
 #endif
 	LCD_Config();
 	DMA_Config();
-	disp_drv.buffer = &buf;
+	disp_drv.draw_buf = &buf;
 	disp_drv.flush_cb = tft_flush;
 	disp_drv.monitor_cb = monitor_cb;
+	disp_drv.hor_res = 240;
+	disp_drv.ver_res = 320;
 	lv_disp_drv_register(&disp_drv);
 }
 

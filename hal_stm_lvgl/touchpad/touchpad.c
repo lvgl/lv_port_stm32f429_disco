@@ -1,13 +1,13 @@
 /**
  * @file indev.c
- * 
+ *
  */
 
 /*********************
  *      INCLUDES
  *********************/
 #include "hal_stm_lvgl/tft/tft.h"
-#include "lvgl/src/lv_hal/lv_hal.h"
+#include "lvgl/lvgl.h"
 
 #include "stm32f4xx.h"
 #include "../stm32f429i_discovery.h"
@@ -47,7 +47,7 @@ void touchpad_init(void)
   stmpe811_Init(TS_I2C_ADDRESS);
   stmpe811_TS_Start(TS_I2C_ADDRESS);
 
-  lv_indev_drv_t indev_drv;
+  static lv_indev_drv_t indev_drv;
   lv_indev_drv_init(&indev_drv);
   indev_drv.read_cb = touchpad_read;
   indev_drv.type = LV_INDEV_TYPE_POINTER;

@@ -13,12 +13,10 @@
 #include "hal_stm_lvgl/stm32f429i_discovery.h"
 
 #include "lvgl/lvgl.h"
+#include "lvgl/examples/lv_examples.h"
 
 #include "hal_stm_lvgl/tft/tft.h"
 #include "hal_stm_lvgl/touchpad/touchpad.h"
-
-#include "lv_examples/lv_examples.h"
-
 
 static void SystemClock_Config(void);
 
@@ -32,7 +30,7 @@ int main(void)
 
 	/*Start up indication*/
 	BSP_LED_Init(LED3);
-	uint8_t i;
+	uint32_t i;
 	for (i = 0; i < 8; i++) {
 		BSP_LED_Toggle(LED3);
 		HAL_Delay(50);
@@ -43,11 +41,14 @@ int main(void)
 	tft_init();
 	touchpad_init();
 
+//	lv_example_scroll_3();
+//	lv_example_chart_7();
+
 	lv_demo_widgets();
 
 	while (1)
 	{
-		HAL_Delay(10);
+		HAL_Delay(3);
 		lv_task_handler();
 	}
 }

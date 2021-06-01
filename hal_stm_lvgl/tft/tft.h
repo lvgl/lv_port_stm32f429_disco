@@ -10,8 +10,7 @@
  *      INCLUDES
  *********************/
 #include <stdint.h>
-#include "lvgl/src/lv_misc/lv_color.h"
-#include "lvgl/src/lv_misc/lv_area.h"
+#include "lvgl/lvgl.h"
 
 /*********************
  *      DEFINES
