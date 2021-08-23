@@ -12,7 +12,7 @@ The CubeMX drivers are used to initilaize the peripherals.
 
 In `hal_stm_lvgl/tft/tft.h` you can enable/disable external frame buffer placement and GPU usage. 
 
-The project was created with CubeIDE IDE.
+The project was created with CubeIDE.
 
 ## Get started
 - Clone the project: `git clone https://github.com/littlevgl/stm32f429_disco_no_os_sw4stm32.git --recurse-submodules`
